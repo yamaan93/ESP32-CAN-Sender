@@ -1,30 +1,41 @@
 #include <Arduino.h>
-#include <mcp2515.h>
 
-MCP2515 mcp2515(2); // cs/ss pin is 5 
+#include "mcp2515.h"
+#include "esp_system.h"
+#include "driver/spi_master.h"
 
-struct can_frame canMessage;
+struct can_frame frame;
+spi_device_handle_t spi;
 
-void setup() {
+MCP2515 mcp2515(&spi);
+
+void setup()
+{
+
   Serial.begin(9600);
-  SPI.begin();
-   mcp2515.reset();
-   mcp2515.setBitrate(CAN_500KBPS,MCP_8MHZ);
-   mcp2515.setNormalMode();
-  
-  
+  Serial.print("MOSI: ");
+  Serial.println(MOSI);
+  Serial.print("MISO: ");
+  Serial.println(MISO);
+  Serial.print("SCK: ");
+  Serial.println(SCK);
+  Serial.print("SS: ");
+  Serial.println(SS);
+
+  mcp2515.reset();
+  mcp2515.setBitrate(CAN_500KBPS, MCP_8MHZ);
+  mcp2515.setNormalMode();
 }
 
-void loop() {
-  int speed = 14;
-  int temp = 25;
+void loop()
+{
+  struct can_frame message;
+  message.can_id = 0x000;
+  message.can_dlc = 4;
 
-  canMessage.can_id = 0x000;
-  canMessage.can_dlc = 4;
-  canMessage.data[0] = speed;
-  canMessage.data[1] = temp;
-
-  mcp2515.sendMessage(&canMessage);
-
-
+  for (int i = 0; i < message.can_dlc; i++)
+  {
+    message.data[i] = i;
+  }
+  mcp2515.sendMessage(MCP2515::TXB1, &message);
 }
